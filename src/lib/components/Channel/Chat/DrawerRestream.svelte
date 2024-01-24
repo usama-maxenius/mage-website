@@ -7,7 +7,6 @@
 	import IconSocialTwitch from '$lib/assets/icons/social/IconSocialTwitch.svelte'
 	import IconSocialYouTube from '$lib/assets/icons/social/IconSocialYouTube.svelte'
 	import { env } from '$env/dynamic/public'
-
 	$: auth = {
 		userId: $page.data.user?.userId,
 		token: $page.data.user?.token
@@ -127,8 +126,22 @@
 		;(payload.url = linkRes.streamaddress),
 			(payload.streamKey = linkRes.streamKey),
 			(selected = 'youtube')
-			console.log(selected)
+		console.log(selected)
 	}
+
+	const linkYouTube = async () => {
+    try {
+      const response = await fetch(`/api/youtube/link?channelId=${$page.params.channelId}`);
+      if (response.status === 302) {
+        // The server has set the 'location' header for redirection
+        // The browser will handle the redirection automatically
+      } else {
+        console.log('No redirection needed:', await response.json());
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 </script>
 
 <div class="drawer drawer-end">
@@ -215,16 +228,10 @@
 						<div class="form-control w-full pt-4">
 							<div class="flex gap-3">
 								{#if env.PUBLIC_CROSS_ORIGIN === 'false'}
-									<button
-										on:click={async () => {
-											const linkRes = await get(
-												`youtube/link?channelId=${$page.params.channelId}`,
-												auth
-											)
-											if (linkRes.redirect) {
-												window.location.replace(linkRes.redirectUrl)
-											}
-										}}>Link Youtube</button>
+									<button 
+									on:click={linkYouTube}
+									
+									>Link Youtube</button>
 									<button
 										on:click={async () => {
 											const linkRes = await get(

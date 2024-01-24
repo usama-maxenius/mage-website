@@ -4,13 +4,15 @@ import { Authenticate } from '$lib/authentication/authentication'
 import { get } from '$lib/api'
 import { user_role } from '$lib/stores/userStore'
 import { env } from '$env/dynamic/public'
+import { page } from '$app/stores'
+import { browser } from '$app/environment';
 
 /** @type {import('@sveltejs/kit').Handle} */
 export const handle: Handle = async ({ event, resolve }) => {
 	const pathname = event.url.pathname
 	const userId = event.url.searchParams.get('userId') || event.cookies.get('userId') || ''
 	let token = event.url.searchParams.get('token') || event.cookies.get('token') || ''
-
+	const channelId = event.url.searchParams.get('channelId')
 	//TODO: get and save params from twitchAuthCallback
 	//TODO: get and save params from youTubeAuthCallback
 
@@ -63,6 +65,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
+	console.log({ channelId })
+	if (pathname === '/api/youtube/link') {
+		const linkRes = await linkYoutubeAccount(channelId!, { userId, token });
+
+		if (linkRes.redirect) {
+			console.log({linkRes})
+			return redirect(302, linkRes.redirectUrl);
+		}
+	}
+
 	if (Authenticate({ pathname, user_role: role || 'user' })) {
 		if (maintenanceMode) {
 			if (pathname === '/maintenance') {
@@ -83,6 +95,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 	} else {
 		return await resolve(event)
 	}
+}
+
+// Function to link YouTube account
+async function linkYoutubeAccount(channelId: string, auth: { userId: string, token: string }) {
+	const linkRes = await get(`youtube/link?channelId=${channelId}`, auth);
+	return linkRes;
 }
 
 export const handleError = ({ error }: { error: any }) => {
